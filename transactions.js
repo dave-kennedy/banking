@@ -180,13 +180,12 @@ function addKeyword(config, name, categoryName) {
             throw err;
         }
 
-        var categoryID = rows[0].id;
-
-        if (!categoryID) {
+        if (!rows.length) {
             throw 'Category "' + categoryName + '" not found';
         }
 
-        var sql = 'INSERT INTO keywords SET ?';
+        var categoryID = rows[0].id,
+            sql = 'INSERT INTO keywords SET ?';
 
         connection.query(sql, {name: name, category_id: categoryID}, function (err, result) {
             if (err) {
