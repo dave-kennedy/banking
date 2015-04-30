@@ -14,7 +14,7 @@ To get data into the database, I export my banking transactions as a csv file fr
 mysql> load data local infile '/path/to/transactions.csv' into table transactions fields terminated by ',' enclosed by '"' lines terminated by '\n' (date, description, `check`, credit, debit);
 ```
 
-A sample is provided to get started with, as well as sample categories and keywords. A sample config file is also provided. This file needs to be renamed to config.json and updated with the correct values.
+A sample is provided to get started with (in the data subfolder), as well as sample categories and keywords. A sample config file is also provided (in the config subfolder). This file needs to be renamed to config.json and updated with the correct values.
 
 Next, install the dependencies:
 
@@ -25,6 +25,6 @@ npm install
 Finally, run the script:
 
 ```bash
-node transactions.js | less
+node transactions.js
 ```
 
