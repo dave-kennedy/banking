@@ -1,6 +1,6 @@
+config/config.json
+data/categories.csv
+data/keywords.csv
+data/transactions.csv
 node_modules/
-categories.csv
-keywords.csv
-transactions.csv
-config.json
 
