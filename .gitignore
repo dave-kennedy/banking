@@ -1,0 +1,6 @@
+node_modules/
+categories.csv
+keywords.csv
+transactions.csv
+config.json
+
