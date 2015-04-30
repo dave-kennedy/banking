@@ -152,5 +152,68 @@ function getData(config) {
     });
 }
 
-readConfig(getData);
+function addCategory(config, name) {
+    var connection = createConnection(config),
+        sql = 'INSERT INTO categories SET ?';
+
+    connection.connect();
+
+    connection.query(sql, {name: name}, function (err, result) {
+        if (err) {
+            throw err;
+        }
+
+        console.log('Category "' + name + '" added');
+
+        connection.end();
+    });
+}
+
+function addKeyword(config, name, categoryName) {
+    var connection = createConnection(config),
+        sql = 'SELECT id FROM categories WHERE ?';
+
+    connection.connect();
+
+    connection.query(sql, {name: categoryName}, function (err, rows) {
+        if (err) {
+            throw err;
+        }
+
+        var categoryID = rows[0].id;
+
+        if (!categoryID) {
+            throw 'Category "' + categoryName + '" not found';
+        }
+
+        var sql = 'INSERT INTO keywords SET ?';
+
+        connection.query(sql, {name: name, category_id: categoryID}, function (err, result) {
+            if (err) {
+                throw err;
+            }
+
+            console.log('Keyword "' + name + '" added to category "' + categoryName + '"');
+
+            connection.end();
+        });
+    });
+}
+
+if (process.argv.length == 2) {
+    return readConfig(getData);
+}
+
+if (process.argv[2] == '--add-category' && process.argv[3]) {
+    return readConfig(function (config) {
+        addCategory(config, process.argv[3]);
+    });
+}
+
+if (process.argv[2] == '--add-keyword' && process.argv[3]
+    && process.argv[4] == '--to-category' && process.argv[5]) {
+    return readConfig(function (config) {
+        addKeyword(config, process.argv[3], process.argv[5]);
+    });
+}
 
