@@ -19,12 +19,49 @@ A sample is provided to get started with (in the data subfolder), as well as sam
 Next, install the dependencies:
 
 ```bash
-npm install
+$ npm install
 ```
 
 Finally, run the script:
 
 ```bash
-node transactions.js
+$ node transactions.js
+```
+
+If a transaction doesn't match any of the keywords, the script will throw an exception. For example:
+
+```bash
+Transaction not categorized:
+Transaction ID: 300
+Date: Wed Apr 16 2014 00:00:00
+Description: Debit Purchase -visa Amazon Mktplace Amzn.com
+Check: null
+Credit: null
+Debit: 30.42
+```
+
+Knowing this was an electronics purchase, I can add a category like so:
+
+```bash
+$ node transactions.js --add-category "Electronics"
+```
+
+Then I can add a keyword:
+
+```bash
+$ node transactions.js --add-keyword "amzn\.com" --to-category "electronics"
+```
+
+The keywords are matched by regular expression, so special characters have to be escaped.
+
+Once every transaction has been categorized, the script will print out a summary of each category to the console:
+
+```bash
+Category ID: 10
+Name: Electronics
+Keywords: amzn\.com
+Total transactions: 1
+Total debits: 30.42
+Total credits: 0.00
 ```
 
