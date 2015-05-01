@@ -268,15 +268,22 @@ function listCategories(connection) {
     });
 }
 
-function listKeywords(connection) {
+function listKeywords(connection, categoryName) {
     var sql = 'SELECT k.id, k.name AS keyword, c.name AS category ' +
               'FROM keywords k ' +
-              'JOIN categories c ON k.category_id = c.id ' +
-              'ORDER BY category, keyword';
+              'JOIN categories c ON k.category_id = c.id ',
+        values = [];
+
+    if (categoryName) {
+        sql += 'WHERE c.name = ? ';
+        values.push(categoryName);
+    }
+
+    sql += 'ORDER BY category, keyword';
 
     connection.connect();
 
-    connection.query(sql, function (err, rows) {
+    connection.query(sql, values, function (err, rows) {
         if (err) {
             throw err;
         }
@@ -337,7 +344,7 @@ function invoke(config) {
             throw 'Cannot use --list-keywords with any other options';
         }
 
-        return listKeywords(connection);
+        return listKeywords(connection, process.argv[process.argv.indexOf('--list-keywords') + 1]);
     }
 
     getData(connection,
