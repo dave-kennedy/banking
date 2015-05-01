@@ -2,6 +2,10 @@ var fs = require('fs'),
     mysql = require('mysql');
 
 function Category(id, name) {
+    if (!id || !name) {
+        throw 'Cannot create category without ID and name';
+    }
+
     this.id = id;
     this.name = name;
     this.keywords = [];
@@ -48,18 +52,26 @@ Category.prototype.toString = function () {
 };
 
 function Keyword(id, name, categoryID) {
+    if (!id || !name || !categoryID) {
+        throw 'Cannot create keyword without ID, name and category ID';
+    }
+
     this.id = id;
     this.name = name;
     this.categoryID = categoryID;
 }
 
 function Transaction(id, date, description, check, credit, debit) {
+    if (!id || !date || !description) {
+        throw 'Cannot create transaction without ID, date and description';
+    }
+
     this.id = id;
     this.date = date;
     this.description = description;
-    this.check = check;
-    this.credit = credit;
-    this.debit = debit;
+    this.check = check || 'N/A';
+    this.credit = credit || 0;
+    this.debit = debit || 0;
 }
 
 Transaction.prototype.toString = function () {
@@ -67,8 +79,8 @@ Transaction.prototype.toString = function () {
            'Date: ' + this.date + '\n' +
            'Description: ' + this.description + '\n' +
            'Check: ' + this.check + '\n' +
-           'Credit: ' + this.credit + '\n' +
-           'Debit: ' + this.debit + '\n';
+           'Credit: ' + this.credit.toFixed(2) + '\n' +
+           'Debit: ' + this.debit.toFixed(2) + '\n';
 };
 
 function readConfig(callback) {
@@ -107,9 +119,9 @@ function displayCategories(categories, verbose) {
 
 function getData(config, categoryName) {
     var connection = createConnection(config),
-        sql = 'SELECT * FROM categories ORDER BY id;' +
-              'SELECT * FROM keywords ORDER BY category_id, id;' +
-              'SELECT * FROM transactions ORDER BY id';
+        sql = 'SELECT * FROM categories ORDER BY name;' +
+              'SELECT * FROM keywords ORDER BY category_id, name;' +
+              'SELECT * FROM transactions ORDER BY date';
 
     connection.connect();
 
@@ -158,7 +170,7 @@ function getData(config, categoryName) {
 
         if (categoryName) {
             displayCategories(categories.filter(function (category) {
-                return category.name == categoryName;
+                return category.name.toLowerCase() == categoryName.toLowerCase();
             }), true);
         } else {
             displayCategories(categories);
@@ -215,6 +227,47 @@ function addKeyword(config, name, categoryName) {
     });
 }
 
+function listCategories(config) {
+    var connection = createConnection(config),
+        sql = 'SELECT * FROM categories ORDER BY name';
+
+    connection.connect();
+
+    connection.query(sql, function (err, rows) {
+        if (err) {
+            throw err;
+        }
+
+        rows.forEach(function (row) {
+            console.log(row);
+        });
+
+        connection.end();
+    });
+}
+
+function listKeywords(config) {
+    var connection = createConnection(config),
+        sql = 'SELECT k.id, k.name AS keyword, c.name AS category ' +
+              'FROM keywords k ' +
+              'JOIN categories c ON k.category_id = c.id ' +
+              'ORDER BY category, keyword';
+
+    connection.connect();
+
+    connection.query(sql, function (err, rows) {
+        if (err) {
+            throw err;
+        }
+
+        rows.forEach(function (row) {
+            console.log(row);
+        });
+
+        connection.end();
+    });
+}
+
 if (process.argv.length == 2) {
     return readConfig(getData);
 }
@@ -235,6 +288,18 @@ if (process.argv[2] == '--add-keyword' && process.argv[3]
     && process.argv[4] == '--to-category' && process.argv[5]) {
     return readConfig(function (config) {
         addKeyword(config, process.argv[3], process.argv[5]);
+    });
+}
+
+if (process.argv[2] == '--list-categories') {
+    return readConfig(function (config) {
+        listCategories(config);
+    });
+}
+
+if (process.argv[2] == '--list-keywords') {
+    return readConfig(function (config) {
+        listKeywords(config);
     });
 }
 
