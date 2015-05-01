@@ -93,7 +93,19 @@ function createConnection(config) {
     });
 }
 
-function getData(config) {
+function displayCategories(categories, verbose) {
+    categories.forEach(function (category) {
+        console.log(category.toString());
+
+        if (verbose) {
+            category.transactions.forEach(function (transaction) {
+                console.log(transaction.toString());
+            });
+        }
+    });
+}
+
+function getData(config, categoryName) {
     var connection = createConnection(config),
         sql = 'SELECT * FROM categories ORDER BY id;' +
               'SELECT * FROM keywords ORDER BY category_id, id;' +
@@ -144,9 +156,13 @@ function getData(config) {
             throw 'Transaction not categorized:\n' + transaction.toString();
         });
 
-        categories.forEach(function (category) {
-            console.log(category.toString());
-        });
+        if (categoryName) {
+            displayCategories(categories.filter(function (category) {
+                return category.name == categoryName;
+            }), true);
+        } else {
+            displayCategories(categories);
+        }
 
         connection.end();
     });
@@ -201,6 +217,12 @@ function addKeyword(config, name, categoryName) {
 
 if (process.argv.length == 2) {
     return readConfig(getData);
+}
+
+if (process.argv[2] == '--inspect-category' && process.argv[3]) {
+    return readConfig(function (config) {
+        getData(config, process.argv[3]);
+    });
 }
 
 if (process.argv[2] == '--add-category' && process.argv[3]) {
