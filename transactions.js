@@ -117,15 +117,32 @@ function displayCategories(categories, verbose) {
     });
 }
 
-function getData(config, categoryName) {
-    var connection = createConnection(config),
-        sql = 'SELECT * FROM categories ORDER BY name;' +
+function getData(connection, categoryName, fromDate, toDate) {
+    var sql = 'SELECT * FROM categories ORDER BY name;' +
               'SELECT * FROM keywords ORDER BY category_id, name;' +
-              'SELECT * FROM transactions ORDER BY date';
+              'SELECT * FROM transactions ',
+        where = [],
+        values = [];
+
+    if (fromDate) {
+        where.push('date >= ?');
+        values.push(new Date(fromDate));
+    }
+
+    if (toDate) {
+        where.push('date <= ?');
+        values.push(new Date(toDate));
+    }
+
+    if (where.length) {
+        sql += 'WHERE ' + where.join(' AND ') + ' ';
+    }
+
+    sql += 'ORDER BY date';
 
     connection.connect();
 
-    connection.query(sql, function (err, rows) {
+    connection.query(sql, values, function (err, rows) {
         if (err) {
             throw err;
         }
@@ -180,26 +197,32 @@ function getData(config, categoryName) {
     });
 }
 
-function addCategory(config, name) {
-    var connection = createConnection(config),
-        sql = 'INSERT INTO categories SET ?';
+function addCategory(connection, categoryName) {
+    if (!categoryName) {
+        throw 'Cannot add category without name';
+    }
+
+    var sql = 'INSERT INTO categories SET ?';
 
     connection.connect();
 
-    connection.query(sql, {name: name}, function (err, result) {
+    connection.query(sql, {name: categoryName}, function (err, result) {
         if (err) {
             throw err;
         }
 
-        console.log('Category "' + name + '" added');
+        console.log('Category "' + categoryName + '" added');
 
         connection.end();
     });
 }
 
-function addKeyword(config, name, categoryName) {
-    var connection = createConnection(config),
-        sql = 'SELECT id FROM categories WHERE ?';
+function addKeyword(connection, keywordName, categoryName) {
+    if (!keywordName || !categoryName) {
+        throw 'Cannot add keyword without name and category name';
+    }
+
+    var sql = 'SELECT id FROM categories WHERE ?';
 
     connection.connect();
 
@@ -215,21 +238,20 @@ function addKeyword(config, name, categoryName) {
         var categoryID = rows[0].id,
             sql = 'INSERT INTO keywords SET ?';
 
-        connection.query(sql, {name: name, category_id: categoryID}, function (err, result) {
+        connection.query(sql, {name: keywordName, category_id: categoryID}, function (err, result) {
             if (err) {
                 throw err;
             }
 
-            console.log('Keyword "' + name + '" added to category "' + categoryName + '"');
+            console.log('Keyword "' + keywordName + '" added to category "' + categoryName + '"');
 
             connection.end();
         });
     });
 }
 
-function listCategories(config) {
-    var connection = createConnection(config),
-        sql = 'SELECT * FROM categories ORDER BY name';
+function listCategories(connection) {
+    var sql = 'SELECT * FROM categories ORDER BY name';
 
     connection.connect();
 
@@ -246,9 +268,8 @@ function listCategories(config) {
     });
 }
 
-function listKeywords(config) {
-    var connection = createConnection(config),
-        sql = 'SELECT k.id, k.name AS keyword, c.name AS category ' +
+function listKeywords(connection) {
+    var sql = 'SELECT k.id, k.name AS keyword, c.name AS category ' +
               'FROM keywords k ' +
               'JOIN categories c ON k.category_id = c.id ' +
               'ORDER BY category, keyword';
@@ -268,38 +289,62 @@ function listKeywords(config) {
     });
 }
 
-if (process.argv.length == 2) {
-    return readConfig(getData);
+function invoke(config) {
+    var connection = createConnection(config);
+
+    if (process.argv.indexOf('--add-category') > -1) {
+        if (process.argv.indexOf('--add-keyword') > -1
+            || process.argv.indexOf('--list-categories') > -1
+            || process.argv.indexOf('--list-keywords') > -1
+            || process.argv.indexOf('--inspect-category') > -1
+            || process.argv.indexOf('--from-date') > -1
+            || process.argv.indexOf('--to-date') > -1) {
+            throw 'Cannot use --add-category with any other options';
+        }
+
+        return addCategory(connection, process.argv[process.argv.indexOf('--add-category') + 1]);
+    }
+
+    if (process.argv.indexOf('--add-keyword') > -1 && process.argv.indexOf('--to-category') > -1) {
+        if (process.argv.indexOf('--list-categories') > -1
+            || process.argv.indexOf('--list-keywords') > -1
+            || process.argv.indexOf('--inspect-category') > -1
+            || process.argv.indexOf('--from-date') > -1
+            || process.argv.indexOf('--to-date') > -1) {
+            throw 'Cannot use --add-keyword with any other options';
+        }
+
+        return addKeyword(connection,
+            process.argv[process.argv.indexOf('--add-keyword') + 1],
+            process.argv[process.argv.indexOf('--to-category') + 1]);
+    }
+
+    if (process.argv.indexOf('--list-categories') > -1) {
+        if (process.argv.indexOf('--list-keywords') > -1
+            || process.argv.indexOf('--inspect-category') > -1
+            || process.argv.indexOf('--from-date') > -1
+            || process.argv.indexOf('--to-date') > -1) {
+            throw 'Cannot use --list-categories with any other options';
+        }
+
+        return listCategories(connection);
+    }
+
+    if (process.argv.indexOf('--list-keywords') > -1) {
+        if (process.argv.indexOf('--inspect-category') > -1
+            || process.argv.indexOf('--from-date') > -1
+            || process.argv.indexOf('--to-date') > -1) {
+            throw 'Cannot use --list-keywords with any other options';
+        }
+
+        return listKeywords(connection);
+    }
+
+    getData(connection,
+        process.argv.indexOf('--inspect-category') > -1 ? process.argv[process.argv.indexOf('--inspect-category') + 1] : null,
+        process.argv.indexOf('--from-date') > -1 ? process.argv[process.argv.indexOf('--from-date') + 1] : null,
+        process.argv.indexOf('--to-date') > -1 ? process.argv[process.argv.indexOf('--to-date') + 1] : null);
 }
 
-if (process.argv[2] == '--inspect-category' && process.argv[3]) {
-    return readConfig(function (config) {
-        getData(config, process.argv[3]);
-    });
-}
-
-if (process.argv[2] == '--add-category' && process.argv[3]) {
-    return readConfig(function (config) {
-        addCategory(config, process.argv[3]);
-    });
-}
-
-if (process.argv[2] == '--add-keyword' && process.argv[3]
-    && process.argv[4] == '--to-category' && process.argv[5]) {
-    return readConfig(function (config) {
-        addKeyword(config, process.argv[3], process.argv[5]);
-    });
-}
-
-if (process.argv[2] == '--list-categories') {
-    return readConfig(function (config) {
-        listCategories(config);
-    });
-}
-
-if (process.argv[2] == '--list-keywords') {
-    return readConfig(function (config) {
-        listKeywords(config);
-    });
-}
+readConfig(invoke);
 

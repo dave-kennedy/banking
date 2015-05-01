@@ -1,6 +1,3 @@
 config/config.json
-data/categories.csv
-data/keywords.csv
-data/transactions.csv
 node_modules/
 
