@@ -35,8 +35,8 @@ Transaction not categorized:
 Transaction ID: 300
 Date: Wed Apr 16 2014 00:00:00
 Description: Debit Purchase -visa Amazon Mktplace Amzn.com
-Check: null
-Credit: null
+Check: N/A
+Credit: 0.00
 Debit: 30.42
 ```
 
@@ -64,4 +64,6 @@ Total transactions: 1
 Total debits: 30.42
 Total credits: 0.00
 ```
+
+Use the `--inspect-category` option, followed by the name of a category, to see the detailed output. `--list-categories` will list categories and `--list-keywords` will list keywords.
 
