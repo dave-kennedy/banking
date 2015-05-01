@@ -1,14 +1,6 @@
-2014-01-01,Debit Purchase Joe's Garage,NULL,NULL,300.58
-2014-01-10,Monthly Maintenance Fee,NULL,NULL,10.00
-2014-01-22,Debit Purchase -visa Chipotle,NULL,NULL,8.66
-2014-01-30,Debit Purchase -visa Gog.com,NULL,NULL,2.49
-2014-02-04,Debit Purchase -visa Qdoba,NULL,NULL,18.01
-2014-02-06,Debit Purchase -visa Steamgames.com,NULL,NULL,2.49
-2014-02-24,Debit Purchase 7-eleven,NULL,NULL,35.38
-2014-03-02,Debit Purchase -visa Starbucks,NULL,NULL,11.45
-2014-03-02,Coldstone,NULL,NULL,10.35
-2014-03-12,Debit Purchase -visa Wal-mart,NULL,NULL,15.88
-2014-03-20,Debit Purchase Return -visa Wal-mart,NULL,4.60,NULL
-2014-04-01,Debit Purchase -visa Doctor Who,NULL,NULL,20.00
-2014-04-01,Debit Purchase -visa Old Chicago,NULL,NULL,16.52
-2014-04-04,Debit Purchase -visa Waffle House,NULL,NULL,25.36
+"Date","Name","Amount"
+"1/4/2015","DEPOSIT","1000000.00"
+"1/4/2015","DEBIT PURCHASE -VISA MCDONALD'S","-19.10"
+"1/6/2015","DEBIT PURCHASE -VISA GOG.COM","-2.49"
+"1/10/2015","DEBIT PURCHASE -VISA 7-ELEVEN","-35.98"
+"1/12/2015","DEBIT PURCHASE -VISA DOCTOR WHO","-40.00"
