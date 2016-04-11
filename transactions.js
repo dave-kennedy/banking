@@ -105,9 +105,9 @@ function getData(filename, callback) {
 
         var lines = data.split('\n').filter(isNotEmpty),
             header = lines.shift(),
-            columns = header.split('"').filter(isNotEmpty),
+            columns = header.split(','),
             rows = lines.map(function (line, index) {
-                var row = line.split('"').filter(isNotEmpty);
+                var row = line.split(',');
 
                 if (row.length != columns.length) {
                     throw 'Columns mismatch on line ' + (index + 2) + ':\n' + line + '\n';
