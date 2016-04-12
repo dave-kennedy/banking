@@ -1,6 +1,6 @@
-"Name","Keywords"
-"Deposits","^deposit$"
-"Fast food","mcdonald's"
-"Games","gog\.com|steamgames\.com"
-"Gas","7-?eleven"
-"Medical","(?:dr|doctor) who"
+Name,Keywords
+Deposits,^deposit$
+Fast food,mcdonald's
+Games,gog\.com|steamgames\.com
+Gas,7-?eleven
+Medical,(?:dr|doctor) who
