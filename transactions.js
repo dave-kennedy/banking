@@ -90,6 +90,10 @@ function getOptions() {
         options.toDate = new Date(process.argv[process.argv.indexOf('--to-date') + 1]);
     }
 
+    if (process.argv.indexOf('--verbose') > -1) {
+        options.verbose = true;
+    }
+
     return options;
 }
 
@@ -179,6 +183,10 @@ function displayCategories(categories, verbose) {
                     return category.name.toLowerCase() == options.inspectCategory.toLowerCase();
                 });
 
+                return displayCategories(categories, true);
+            }
+
+            if (options.verbose) {
                 return displayCategories(categories, true);
             }
 

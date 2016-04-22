@@ -52,7 +52,8 @@ Total transactions: 2
 Total amount: -4.98
 ```
 
-Use the `--inspect-category` option, followed by the name of a category, to see
-the transactions in that category. A date range can be specified with the
+Use the `--verbose` option to see all the categorized transactions, or the
+`--inspect-category` option, followed by the name of a category, to see the
+transactions in that category. A date range can be specified with the
 `--from-date` and `--to-date` options.
 
