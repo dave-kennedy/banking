@@ -1,4 +1,4 @@
-var fs = require('fs');
+let fs = require('fs');
 
 function Category(name, keywords) {
     if (!name || !keywords) {
@@ -23,7 +23,7 @@ Category.prototype.matchTransaction = function (transaction) {
 };
 
 Category.prototype.toString = function (verbose) {
-    var output = 'Category: ' + this.name + '\n' +
+    let output = 'Category: ' + this.name + '\n' +
                  'Keywords: ' + this.keywords.source.replace(/\|/g, ', ') + '\n' +
                  'Total transactions: ' +  this.totalTransactions + '\n' +
                  'Total amount: ' + this.totalAmount.toFixed(2) + '\n\n';
@@ -64,7 +64,7 @@ Transaction.prototype.toString = function () {
 };
 
 function getOptions() {
-    var options = {};
+    let options = {};
 
     if (!process.argv[2]) {
         throw 'Missing name of csv file containing transaction data';
@@ -101,17 +101,26 @@ function isNotEmpty(str) {
     return str && str != ',';
 }
 
+function splitLine(str) {
+    if (str.startsWith('"') && str.endsWith('"')) {
+        str = str.slice(1, -1);
+        return str.split('","');
+    }
+
+    return str.split(',');
+}
+
 function getData(filename, callback) {
     fs.readFile(filename, 'utf-8', function (err, data) {
         if (err) {
             throw err;
         }
 
-        var lines = data.split('\n').filter(isNotEmpty),
+        let lines = data.split('\n').filter(isNotEmpty),
             header = lines.shift(),
-            columns = header.split(','),
+            columns = splitLine(header),
             rows = lines.map(function (line, index) {
-                var row = line.split(',');
+                let row = splitLine(line);
 
                 if (row.length != columns.length) {
                     throw 'Columns mismatch on line ' + (index + 2) + ':\n' + line + '\n';
@@ -120,7 +129,7 @@ function getData(filename, callback) {
                 return row;
             }),
             objects = rows.map(function (row) {
-                var obj = {};
+                let obj = {};
 
                 columns.forEach(function (column, index) {
                     obj[column] = row[index];
@@ -140,7 +149,7 @@ function displayCategories(categories, verbose) {
 }
 
 (function () {
-    var options = getOptions();
+    let options = getOptions();
 
     getData(options.transactionFile, function (transactions) {
         transactions = transactions.map(function (transaction) {
@@ -167,7 +176,7 @@ function displayCategories(categories, verbose) {
             });
 
             transactions.forEach(function (transaction) {
-                for (var c = 0; c < categories.length; c++) {
+                for (let c = 0; c < categories.length; c++) {
                     category = categories[c];
 
                     if (category.matchTransaction(transaction)) {

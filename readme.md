@@ -23,7 +23,7 @@ Deposits,^deposit$
 The script can then be run like so:
 
 ```sh
-$ node categorize.js data/transactions.csv data/categories.csv
+$ node main.js data/transactions.csv data/categories.csv
 ```
 
 If a transaction doesn't match any of the categories, the script will throw an
@@ -58,7 +58,7 @@ transactions in that category. A date range can be specified with the
 `--from-date` and `--to-date` options. For example:
 
 ```sh
-$ node categorize.js data/transactions.csv data/categories.csv \
+$ node main.js data/transactions.csv data/categories.csv \
 > --inspect-category Groceries --from-date 4/1/2016 --to-date 4/30/2016
 ```
 
