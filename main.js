@@ -176,15 +176,19 @@ function displayCategories(categories, verbose) {
             });
 
             transactions.forEach(function (transaction) {
-                for (let c = 0; c < categories.length; c++) {
-                    category = categories[c];
+                let matchingCategories = categories.filter(function (category) {
+                    return category.matchTransaction(transaction);
+                });
 
-                    if (category.matchTransaction(transaction)) {
-                        return category.addTransaction(transaction);
-                    }
+                if (!matchingCategories.length) {
+                    throw 'Transaction not categorized:\n' + transaction.toString();
                 }
 
-                throw 'Transaction not categorized:\n' + transaction.toString();
+                if (matchingCategories.length > 1) {
+                    throw 'Transaction matches multiple categories:\n' + transaction.toString();
+                }
+
+                matchingCategories[0].addTransaction(transaction);
             });
 
             if (options.inspectCategory) {
