@@ -1,5 +1,7 @@
 const fs = require('node:fs');
 
+const csv = require('csv-parse/sync');
+
 class Category {
     name;
     keywords;
@@ -73,38 +75,19 @@ class Transaction {
     }
 }
 
-function splitLine(str) {
-    if (str.startsWith('"') && str.endsWith('"')) {
-        str = str.slice(1, -1);
-        return str.split('","');
-    }
-
-    return str.split(',');
-}
-
 function getRows(filename, callback) {
     fs.readFile(filename, 'utf-8', (err, data) => {
         if (err) {
             throw err;
         }
 
-        const lines = data.split('\n').filter(line => line && line != ',');
-        const header = splitLine(lines.shift());
-
-        const rows = lines.map((line, index) => {
-            const row = splitLine(line);
-
-            if (row.length != header.length) {
-                throw `Columns mismatch on line ${index + 2}:\n${line}\n`;
-            }
-
-            return header.reduce((obj, column, index) => {
-                obj[column] = row[index];
-                return obj;
-            }, {});
+        const records = csv.parse(data, {
+            columns: true,
+            relax_quotes: true,
+            skip_empty_lines: true
         });
 
-        callback(rows);
+        callback(records);
     });
 }
 
