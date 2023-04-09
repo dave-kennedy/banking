@@ -27,7 +27,7 @@ Deposits,^deposit$
 The script can then be run like so:
 
 ```sh
-$ node main.js transactions.csv --categories-file categories.csv
+$ node main.js transactions.csv -c categories.csv
 ```
 
 If a transaction doesn't match any of the categories, it will ask for a category
@@ -54,7 +54,7 @@ Total amount: -10.48
 
 ## Options
 
-### --categories-file [FILE]
+### -c [FILE], --categories [FILE], --categories-file [FILE]
 
 Default: `categories.csv`
 
@@ -65,10 +65,10 @@ backup copy if it has a lot of data. If it doesn't exist, it will be created.
 Example:
 
 ```sh
-$ node main.js transactions.csv --categories-file categories.csv
+$ node main.js transactions.csv -c categories.csv
 ```
 
-### --transaction-columns [JSON]
+### -m [JSON], --tcols [JSON], --transaction-columns [JSON]
 
 Default: `{"date": "Date", "description": "Description", "amount": "Amount"}`
 
@@ -86,11 +86,11 @@ DEBIT,2015-01-12T10:04:16.123Z,DEBIT PURCHASE -VISA DOCTOR WHO,-40.00
 In this case, you can specify the column names like so:
 
 ```sh
-$ node main.js transactions.csv --transaction-columns \
+$ node main.js transactions.csv -m \
     '{"date": "DateTime", "description": "Name", "amount": "Amount"}'
 ```
 
-### --category-columns [JSON]
+### -n [JSON], --ccols [JSON], --category-columns [JSON]
 
 Default: `{"name": "Name", "pattern": "Pattern"}`
 
@@ -107,11 +107,10 @@ Medical,red,(?:dr|doctor) who,true
 In this case, you can specify the column names like so:
 
 ```sh
-$ node main.js transactions.csv --category-columns \
-    '{"name": "Label", "pattern": "Keywords"}'
+$ node main.js transactions.csv -n '{"name": "Label", "pattern": "Keywords"}'
 ```
 
-### --only-categories [CATEGORIES]
+### -o [CATEGORIES], --only [CATEGORIES], --only-categories [CATEGORIES]
 
 Default: none
 
@@ -120,10 +119,10 @@ Use this option to display only the listed categories.
 Example:
 
 ```sh
-$ node main.js transactions.csv --only-categories 'fast food,groceries'
+$ node main.js transactions.csv -o 'fast food,groceries'
 ```
 
-### --from-date [DATE]
+### -f [DATE], --from [DATE], --from-date [DATE]
 
 Default: none
 
@@ -132,10 +131,10 @@ Use this option to exclude transactions before this date.
 Example:
 
 ```sh
-$ node main.js transactions.csv --from-date 4/1/2016
+$ node main.js transactions.csv -f 4/1/2016
 ```
 
-### --to-date [DATE]
+### -t [DATE], --to [DATE], --to-date [DATE]
 
 Default: none
 
@@ -144,10 +143,10 @@ Use this option to exclude transactions after this date.
 Example:
 
 ```sh
-$ node main.js transactions.csv --from-date 4/30/2016
+$ node main.js transactions.csv -t 4/30/2016
 ```
 
-### --verbose
+### -v, --verbose
 
 Default: `false`
 
@@ -156,6 +155,6 @@ Use this option to list the transactions in the displayed categories.
 Example:
 
 ```sh
-$ node main.js transactions.csv --verbose
+$ node main.js transactions.csv -v
 ```
 

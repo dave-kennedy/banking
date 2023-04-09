@@ -163,7 +163,13 @@ function parseOption({index, name, description, type, defaultValue}) {
         return args[index];
     }
 
-    const optIndex = args.indexOf(name);
+    let optIndex;
+
+    if (name instanceof Array) {
+        optIndex = args.findLastIndex(arg => name.includes(arg));
+    } else {
+        optIndex = args.indexOf(name);
+    }
 
     if (optIndex == -1) {
         return defaultValue;
@@ -198,23 +204,35 @@ const options = {
         description: 'name of csv file containing transaction data'
     }),
     categoriesFile: parseOption({
-        name: '--categories-file',
+        name: ['-c', '--categories', '--categories-file'],
         defaultValue: 'categories.csv'
     }),
     transactionColumns: parseOption({
-        name: '--transaction-columns',
+        name: ['-m', '--tcols', '--transaction-columns'],
         type: 'json',
         defaultValue: {date: 'Date', description: 'Description', amount: 'Amount'}
     }),
     categoryColumns: parseOption({
-        name: '--category-columns',
+        name: ['-n', '--ccols', '--category-columns'],
         type: 'json',
         defaultValue: {name: 'Name', pattern: 'Pattern'}
     }),
-    onlyCategories: parseOption({name: '--only-categories', type: 'array'}),
-    fromDate: parseOption({name: '--from-date', type: 'date'}),
-    toDate: parseOption({name: '--to-date', type: 'date'}),
-    verbose: parseOption({name: '--verbose', type: 'boolean'})
+    onlyCategories: parseOption({
+        name: ['-o', '--only', '--only-categories'],
+        type: 'array'
+    }),
+    fromDate: parseOption({
+        name: ['-f', '--from', '--from-date'],
+        type: 'date'
+    }),
+    toDate: parseOption({
+        name: ['-t', '--to', '--to-date'],
+        type: 'date'
+    }),
+    verbose: parseOption({
+        name: ['-v', '--verbose'],
+        type: 'boolean'
+    })
 };
 
 getTransactions(options, transactions => {
