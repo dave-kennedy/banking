@@ -1,35 +1,43 @@
-let fs = require('fs');
+const fs = require('node:fs');
 
-function Category(name, keywords) {
-    if (!name || !keywords) {
-        throw 'Cannot create category without name and keywords';
+class Category {
+    name;
+    keywords;
+    transactions;
+    totalTransactions;
+    totalAmount;
+
+    constructor(name, keywords) {
+        if (!name || !keywords) {
+            throw 'Cannot create category without name and keywords';
+        }
+
+        this.name = name;
+        this.keywords = new RegExp(keywords, 'i');
+        this.transactions = [];
+        this.totalTransactions = 0;
+        this.totalAmount = 0;
     }
 
-    this.name = name;
-    this.keywords = new RegExp(keywords, 'i');
-    this.transactions = [];
-    this.totalTransactions = 0;
-    this.totalAmount = 0;
-}
+    addTransaction(transaction) {
+        this.transactions.push(transaction);
+        this.totalTransactions++;
+        this.totalAmount += transaction.amount;
+    }
 
-Category.prototype.addTransaction = function (transaction) {
-    this.transactions.push(transaction);
-    this.totalTransactions++;
-    this.totalAmount += transaction.amount;
-};
+    matchTransaction(transaction) {
+        return this.keywords.test(transaction.description);
+    }
 
-Category.prototype.matchTransaction = function (transaction) {
-    return this.keywords.test(transaction.description);
-};
+    toString() {
+        return `Category: ${this.name}\n` +
+            `Keywords: ${this.keywords.source.replace(/\|/g, ', ')}\n` +
+            `Total transactions: ${this.totalTransactions}\n` +
+            `Total amount: ${this.totalAmount.toFixed(2)}\n\n`;
+    }
 
-Category.prototype.toString = function (verbose) {
-    let output = 'Category: ' + this.name + '\n' +
-                 'Keywords: ' + this.keywords.source.replace(/\|/g, ', ') + '\n' +
-                 'Total transactions: ' +  this.totalTransactions + '\n' +
-                 'Total amount: ' + this.totalAmount.toFixed(2) + '\n\n';
-
-    if (verbose) {
-        this.transactions.sort(function (transactionA, transactionB) {
+    sortTransactions() {
+        return this.transactions.sort((transactionA, transactionB) => {
             if (transactionA.date < transactionB.date) {
                 return -1;
             }
@@ -39,32 +47,34 @@ Category.prototype.toString = function (verbose) {
             }
 
             return 0;
-        }).forEach(function (transaction) {
-            output += transaction.toString();
         });
     }
-
-    return output;
-};
-
-function Transaction(date, description, amount) {
-    if (!date || !description || !amount) {
-        throw 'Cannot create transaction without date, description and amount';
-    }
-
-    this.date = new Date(date);
-    this.description = description.trim();
-    this.amount = parseFloat(amount);
 }
 
-Transaction.prototype.toString = function () {
-    return 'Date: ' + this.date.toLocaleDateString() + '\n' +
-           'Description: ' + this.description + '\n' +
-           'Amount: ' + this.amount.toFixed(2) + '\n\n';
-};
+class Transaction {
+    date;
+    description;
+    amount;
+
+    constructor(date, description, amount) {
+        if (!date || !description || !amount) {
+            throw 'Cannot create transaction without date, description and amount';
+        }
+
+        this.date = new Date(date);
+        this.description = description.trim();
+        this.amount = parseFloat(amount);
+    }
+
+    toString() {
+        return `Date: ${this.date.toLocaleDateString()}\n` +
+            `Description: ${this.description}\n` +
+            `Amount: ${this.amount.toFixed(2)}\n\n`;
+    }
+}
 
 function getOptions() {
-    let options = {};
+    const options = {};
 
     if (!process.argv[2]) {
         throw 'Missing name of csv file containing transaction data';
@@ -78,27 +88,23 @@ function getOptions() {
 
     options.categoryFile = process.argv[3];
 
-    if (process.argv.indexOf('--inspect-category') > -1) {
+    if (process.argv.includes('--inspect-category')) {
         options.inspectCategory = process.argv[process.argv.indexOf('--inspect-category') + 1];
     }
 
-    if (process.argv.indexOf('--from-date') > -1) {
+    if (process.argv.includes('--from-date')) {
         options.fromDate = new Date(process.argv[process.argv.indexOf('--from-date') + 1]);
     }
 
-    if (process.argv.indexOf('--to-date') > -1) {
+    if (process.argv.includes('--to-date')) {
         options.toDate = new Date(process.argv[process.argv.indexOf('--to-date') + 1]);
     }
 
-    if (process.argv.indexOf('--verbose') > -1) {
+    if (process.argv.includes('--verbose')) {
         options.verbose = true;
     }
 
     return options;
-}
-
-function isNotEmpty(str) {
-    return str && str != ',';
 }
 
 function splitLine(str) {
@@ -110,101 +116,115 @@ function splitLine(str) {
     return str.split(',');
 }
 
-function getData(filename, callback) {
-    fs.readFile(filename, 'utf-8', function (err, data) {
+function getRows(filename, callback) {
+    fs.readFile(filename, 'utf-8', (err, data) => {
         if (err) {
             throw err;
         }
 
-        let lines = data.split('\n').filter(isNotEmpty),
-            header = lines.shift(),
-            columns = splitLine(header),
-            rows = lines.map(function (line, index) {
-                let row = splitLine(line);
+        const lines = data.split('\n').filter(line => line && line != ',');
+        const header = splitLine(lines.shift());
 
-                if (row.length != columns.length) {
-                    throw 'Columns mismatch on line ' + (index + 2) + ':\n' + line + '\n';
-                }
+        const rows = lines.map((line, index) => {
+            const row = splitLine(line);
 
-                return row;
-            }),
-            objects = rows.map(function (row) {
-                let obj = {};
+            if (row.length != header.length) {
+                throw `Columns mismatch on line ${index + 2}:\n${line}\n`;
+            }
 
-                columns.forEach(function (column, index) {
-                    obj[column] = row[index];
-                });
-
+            return header.reduce((obj, column, index) => {
+                obj[column] = row[index];
                 return obj;
-            });
-
-        callback(objects);
-    });
-}
-
-function displayCategories(categories, verbose) {
-    categories.forEach(function (category) {
-        process.stdout.write(category.toString(verbose));
-    });
-}
-
-(function () {
-    let options = getOptions();
-
-    getData(options.transactionFile, function (transactions) {
-        transactions = transactions.map(function (transaction) {
-            return new Transaction(transaction.Date, transaction.Name, transaction.Amount);
+            }, {});
         });
 
-        if (options.fromDate || options.toDate) {
-            transactions = transactions.filter(function (transaction) {
-                if (options.fromDate && transaction.date < options.fromDate) {
-                    return false;
-                }
+        callback(rows);
+    });
+}
 
-                if (options.toDate && transaction.date > options.toDate) {
-                    return false;
-                }
+function getCategories(filename, callback) {
+    getRows(filename, rows => {
+        const categories = rows.map(row => new Category(row.Name, row.Keywords));
 
-                return true;
-            });
+        if (!categories.length) {
+            throw `No categories found in file ${filename}`;
         }
 
-        getData(options.categoryFile, function (categories) {
-            categories = categories.map(function (category) {
-                return new Category(category.Name, category.Keywords);
-            });
+        callback(categories);
+    });
+}
 
-            transactions.forEach(function (transaction) {
-                let matchingCategories = categories.filter(function (category) {
-                    return category.matchTransaction(transaction);
-                });
+function getTransactions(filename, fromDate, toDate, callback) {
+    getRows(filename, rows => {
+        const transactions = rows.map(row => {
+            const transaction = new Transaction(row.Date, row.Name, row.Amount);
 
-                if (!matchingCategories.length) {
-                    throw 'Transaction not categorized:\n' + transaction.toString();
-                }
-
-                if (matchingCategories.length > 1) {
-                    throw 'Transaction matches multiple categories:\n' + transaction.toString();
-                }
-
-                matchingCategories[0].addTransaction(transaction);
-            });
-
-            if (options.inspectCategory) {
-                categories = categories.filter(function (category) {
-                    return category.name.toLowerCase() == options.inspectCategory.toLowerCase();
-                });
-
-                return displayCategories(categories, true);
+            if (fromDate && transaction.date < fromDate) {
+                return null;
             }
+
+            if (toDate && transaction.date > toDate) {
+                return null;
+            }
+
+            return transaction;
+        }).filter(transaction => transaction);
+
+        if (!transactions.length) {
+            throw `No transactions found in file ${filename}`;
+        }
+
+        callback(transactions);
+    });
+}
+
+const options = getOptions();
+
+getTransactions(options.transactionFile, options.fromDate, options.toDate, transactions => {
+    getCategories(options.categoryFile, categories => {
+        transactions.forEach(transaction => {
+            const matchingCategories = categories.filter(category => {
+                return category.matchTransaction(transaction);
+            });
+
+            if (!matchingCategories.length) {
+                throw `Transaction not categorized:\n${transaction}`;
+            }
+
+            if (matchingCategories.length > 1) {
+                throw `Transaction matches multiple categories:\n${transaction}`;
+            }
+
+            matchingCategories[0].addTransaction(transaction);
+        });
+
+        if (options.inspectCategory) {
+            const matchingCategory = categories.find(category => {
+                return category.name.toLowerCase() == options.inspectCategory.toLowerCase();
+            });
+
+            if (!matchingCategory) {
+                throw `No category found named ${options.inspectCategory}`;
+            }
+
+            process.stdout.write(matchingCategory.toString());
+
+            matchingCategory.sortTransactions().forEach(transaction => {
+                process.stdout.write(transaction.toString());
+            });
+
+            return;
+        }
+
+        categories.forEach(category => {
+            process.stdout.write(category.toString());
 
             if (options.verbose) {
-                return displayCategories(categories, true);
+                category.sortTransactions().forEach(transaction => {
+                    process.stdout.write(transaction.toString());
+                });
             }
-
-            displayCategories(categories);
         });
     });
-}());
+});
 
