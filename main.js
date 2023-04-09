@@ -73,40 +73,6 @@ class Transaction {
     }
 }
 
-function getOptions() {
-    const options = {};
-
-    if (!process.argv[2]) {
-        throw 'Missing name of csv file containing transaction data';
-    }
-
-    options.transactionFile = process.argv[2];
-
-    if (!process.argv[3]) {
-        throw 'Missing name of csv file containing category data';
-    }
-
-    options.categoryFile = process.argv[3];
-
-    if (process.argv.includes('--inspect-category')) {
-        options.inspectCategory = process.argv[process.argv.indexOf('--inspect-category') + 1];
-    }
-
-    if (process.argv.includes('--from-date')) {
-        options.fromDate = new Date(process.argv[process.argv.indexOf('--from-date') + 1]);
-    }
-
-    if (process.argv.includes('--to-date')) {
-        options.toDate = new Date(process.argv[process.argv.indexOf('--to-date') + 1]);
-    }
-
-    if (process.argv.includes('--verbose')) {
-        options.verbose = true;
-    }
-
-    return options;
-}
-
 function splitLine(str) {
     if (str.startsWith('"') && str.endsWith('"')) {
         str = str.slice(1, -1);
@@ -178,7 +144,52 @@ function getTransactions(filename, fromDate, toDate, callback) {
     });
 }
 
-const options = getOptions();
+function parseOption({index, name, description, type}) {
+    const args = process.argv.slice(2);
+
+    if (typeof index == 'number') {
+        if (!args[index] || !args[index].trim()) {
+            throw `Missing ${description}`;
+        }
+
+        return args[index];
+    }
+
+    const optIndex = args.indexOf(name);
+
+    if (optIndex == -1) {
+        return;
+    }
+
+    if (type == 'boolean') {
+        return true;
+    }
+
+    if (args.length < optIndex + 2) {
+        throw `Missing value for argument ${name}`;
+    }
+
+    if (type == 'date') {
+        return new Date(args[optIndex + 1]);
+    }
+
+    return args[optIndex + 1];
+}
+
+const options = {
+    transactionFile: parseOption({
+        index: 0,
+        description: 'name of csv file containing transaction data'
+    }),
+    categoryFile: parseOption({
+        index: 1,
+        description: 'name of csv file containing category data'
+    }),
+    inspectCategory: parseOption({name: '--inspect-category'}),
+    fromDate: parseOption({name: '--from-date', type: 'date'}),
+    toDate: parseOption({name: '--to-date', type: 'date'}),
+    verbose: parseOption({name: '--verbose', type: 'boolean'})
+};
 
 getTransactions(options.transactionFile, options.fromDate, options.toDate, transactions => {
     getCategories(options.categoryFile, categories => {
