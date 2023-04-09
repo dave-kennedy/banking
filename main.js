@@ -108,28 +108,37 @@ function getRows(filename, callback) {
     });
 }
 
-function getCategories(filename, callback) {
-    getRows(filename, rows => {
-        const categories = rows.map(row => new Category(row.Name, row.Keywords));
+function getCategories(options, callback) {
+    getRows(options.categoryFile, rows => {
+        const categories = rows.map(row => {
+            return new Category(
+                row[options.categoryColumns.name],
+                row[options.categoryColumns.keywords]
+            );
+        });
 
         if (!categories.length) {
-            throw `No categories found in file ${filename}`;
+            throw `No categories found in file ${options.categoryFile}`;
         }
 
         callback(categories);
     });
 }
 
-function getTransactions(filename, fromDate, toDate, callback) {
-    getRows(filename, rows => {
+function getTransactions(options, callback) {
+    getRows(options.transactionFile, rows => {
         const transactions = rows.map(row => {
-            const transaction = new Transaction(row.Date, row.Name, row.Amount);
+            const transaction = new Transaction(
+                row[options.transactionColumns.date],
+                row[options.transactionColumns.description],
+                row[options.transactionColumns.amount]
+            );
 
-            if (fromDate && transaction.date < fromDate) {
+            if (options.fromDate && transaction.date < options.fromDate) {
                 return null;
             }
 
-            if (toDate && transaction.date > toDate) {
+            if (options.toDate && transaction.date > options.toDate) {
                 return null;
             }
 
@@ -137,14 +146,14 @@ function getTransactions(filename, fromDate, toDate, callback) {
         }).filter(transaction => transaction);
 
         if (!transactions.length) {
-            throw `No transactions found in file ${filename}`;
+            throw `No transactions found in file ${options.transactionFile}`;
         }
 
         callback(transactions);
     });
 }
 
-function parseOption({index, name, description, type}) {
+function parseOption({index, name, description, type, defaultValue}) {
     const args = process.argv.slice(2);
 
     if (typeof index == 'number') {
@@ -158,7 +167,7 @@ function parseOption({index, name, description, type}) {
     const optIndex = args.indexOf(name);
 
     if (optIndex == -1) {
-        return;
+        return defaultValue;
     }
 
     if (type == 'boolean') {
@@ -173,6 +182,10 @@ function parseOption({index, name, description, type}) {
         return new Date(args[optIndex + 1]);
     }
 
+    if (type == 'json') {
+        return JSON.parse(args[optIndex + 1]);
+    }
+
     return args[optIndex + 1];
 }
 
@@ -185,14 +198,24 @@ const options = {
         index: 1,
         description: 'name of csv file containing category data'
     }),
+    transactionColumns: parseOption({
+        name: '--transaction-columns',
+        type: 'json',
+        defaultValue: {date: 'Date', description: 'Description', amount: 'Amount'}
+    }),
+    categoryColumns: parseOption({
+        name: '--category-columns',
+        type: 'json',
+        defaultValue: {name: 'Name', keywords: 'Keywords'}
+    }),
     inspectCategory: parseOption({name: '--inspect-category'}),
     fromDate: parseOption({name: '--from-date', type: 'date'}),
     toDate: parseOption({name: '--to-date', type: 'date'}),
     verbose: parseOption({name: '--verbose', type: 'boolean'})
 };
 
-getTransactions(options.transactionFile, options.fromDate, options.toDate, transactions => {
-    getCategories(options.categoryFile, categories => {
+getTransactions(options, transactions => {
+    getCategories(options, categories => {
         transactions.forEach(transaction => {
             const matchingCategories = categories.filter(category => {
                 return category.matchTransaction(transaction);
