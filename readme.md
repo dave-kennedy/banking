@@ -30,21 +30,17 @@ The script can then be run like so:
 $ node main.js data/transactions.csv data/categories.csv
 ```
 
-If a transaction doesn't match any of the categories, it will throw an
-exception:
+If a transaction doesn't match any of the categories, it will ask for a category
+name and keywords:
 
 ```
 Transaction not categorized:
 Date: Tuesday, January 6, 2015
 Description: DEBIT PURCHASE -VISA GOG.COM
 Amount: -2.49
-```
 
-Knowing this was a game purchase, I can update the regular expression for the
-relevant category:
-
-```
-Games,gog\.com|steamgames\.com
+Please enter a category name: Games
+Please enter keywords: gog\.com
 ```
 
 Once every transaction has been categorized, it will display a summary of each
@@ -52,7 +48,7 @@ category:
 
 ```
 Category: Games
-Keywords: gog\.com, steamgames\.com
+Keywords: steamgames\.com, gog\.com
 Total transactions: 2
 Total amount: -10.48
 ```

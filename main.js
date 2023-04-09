@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 
 const csv = require('csv-parse/sync');
+const prompt = require('prompt-sync')({sigint: true});
 
 class Category {
     name;
@@ -19,6 +20,10 @@ class Category {
         this.transactions = [];
         this.totalTransactions = 0;
         this.totalAmount = 0;
+    }
+
+    addKeywords(keywords) {
+        this.keywords = new RegExp([this.keywords.source, keywords].join('|'), 'i');
     }
 
     addTransaction(transaction) {
@@ -136,6 +141,17 @@ function getTransactions(options, callback) {
     });
 }
 
+function saveCategories(options, categories) {
+    const data = `${options.categoryColumns.name},${options.categoryColumns.keywords}\n` +
+        categories.map(category => `${category.name},${category.keywords.source}`).join('\n');
+
+    fs.writeFileSync(options.categoryFile, data, 'utf-8', err => {
+        if (err) {
+            throw err;
+        }
+    });
+}
+
 function parseOption({index, name, description, type, defaultValue}) {
     const args = process.argv.slice(2);
 
@@ -208,20 +224,44 @@ getTransactions(options, transactions => {
                 return category.matchTransaction(transaction);
             });
 
-            if (!matchingCategories.length) {
-                throw `Transaction not categorized:\n${transaction}`;
-            }
-
             if (matchingCategories.length > 1) {
                 throw `Transaction matches multiple categories:\n${transaction}`;
             }
 
-            matchingCategories[0].addTransaction(transaction);
+            if (matchingCategories.length == 1) {
+                matchingCategories[0].addTransaction(transaction);
+                return;
+            }
+
+            process.stdout.write(`Transaction not categorized:\n${transaction}`);
+
+            const newName = prompt('Please enter a category name: ');
+            const newKeywords = prompt('Please enter keywords: ');
+
+            process.stdout.write('\n' + '-'.repeat(process.stdout.columns) + '\n\n');
+
+            const category = categories.find(category =>
+                category.name.toLowerCase() === newName.toLowerCase()
+            );
+
+            if (category) {
+                category.addKeywords(newKeywords);
+                category.addTransaction(transaction);
+                saveCategories(options, categories);
+                return;
+            }
+
+            const newCategory = new Category(newName, newKeywords);
+            newCategory.addTransaction(transaction);
+            categories.push(newCategory);
+            saveCategories(options, categories);
         });
 
         const onlyCategories = options.onlyCategories?.map(category => category.toLowerCase());
 
-        categories.filter(category => {
+        categories.sort((categoryA, categoryB) => {
+            return categoryA.name.localeCompare(categoryB.name);
+        }).filter(category => {
             return !onlyCategories || onlyCategories.includes(category.name.toLowerCase());
         }).forEach(category => {
             process.stdout.write(category.toString());
