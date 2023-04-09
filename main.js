@@ -82,6 +82,11 @@ class Transaction {
 function getRows(filename, callback) {
     fs.readFile(filename, 'utf-8', (err, data) => {
         if (err) {
+            if (err?.code == 'ENOENT') {
+                callback([]);
+                return;
+            }
+
             throw err;
         }
 
@@ -96,7 +101,7 @@ function getRows(filename, callback) {
 }
 
 function getCategories(options, callback) {
-    getRows(options.categoryFile, rows => {
+    getRows(options.categoriesFile, rows => {
         const categories = rows.map(row => {
             return new Category(
                 row[options.categoryColumns.name],
@@ -104,16 +109,12 @@ function getCategories(options, callback) {
             );
         });
 
-        if (!categories.length) {
-            throw `No categories found in file ${options.categoryFile}`;
-        }
-
         callback(categories);
     });
 }
 
 function getTransactions(options, callback) {
-    getRows(options.transactionFile, rows => {
+    getRows(options.transactionsFile, rows => {
         const transactions = rows.map(row => {
             const transaction = new Transaction(
                 row[options.transactionColumns.date],
@@ -133,7 +134,7 @@ function getTransactions(options, callback) {
         }).filter(transaction => transaction);
 
         if (!transactions.length) {
-            throw `No transactions found in file ${options.transactionFile}`;
+            throw `No transactions found in file ${options.transactionsFile}`;
         }
 
         callback(transactions);
@@ -144,7 +145,7 @@ function saveCategories(options, categories) {
     const data = `${options.categoryColumns.name},${options.categoryColumns.pattern}\n` +
         categories.map(category => `${category.name},${category.pattern.source}`).join('\n');
 
-    fs.writeFileSync(options.categoryFile, data, 'utf-8', err => {
+    fs.writeFileSync(options.categoriesFile, data, 'utf-8', err => {
         if (err) {
             throw err;
         }
@@ -192,13 +193,13 @@ function parseOption({index, name, description, type, defaultValue}) {
 }
 
 const options = {
-    transactionFile: parseOption({
+    transactionsFile: parseOption({
         index: 0,
         description: 'name of csv file containing transaction data'
     }),
-    categoryFile: parseOption({
-        index: 1,
-        description: 'name of csv file containing category data'
+    categoriesFile: parseOption({
+        name: '--categories-file',
+        defaultValue: 'categories.csv'
     }),
     transactionColumns: parseOption({
         name: '--transaction-columns',
