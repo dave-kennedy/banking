@@ -5,25 +5,25 @@ const prompt = require('prompt-sync')({sigint: true});
 
 class Category {
     name;
-    keywords;
+    pattern;
     transactions;
     totalTransactions;
     totalAmount;
 
-    constructor(name, keywords) {
-        if (!name || !keywords) {
-            throw 'Cannot create category without name and keywords';
+    constructor(name, pattern) {
+        if (!name || !pattern) {
+            throw 'Cannot create category without name and pattern';
         }
 
         this.name = name;
-        this.keywords = new RegExp(keywords, 'i');
+        this.pattern = new RegExp(pattern, 'i');
         this.transactions = [];
         this.totalTransactions = 0;
         this.totalAmount = 0;
     }
 
-    addKeywords(keywords) {
-        this.keywords = new RegExp([this.keywords.source, keywords].join('|'), 'i');
+    addPattern(pattern) {
+        this.pattern = new RegExp([this.pattern.source, pattern].join('|'), 'i');
     }
 
     addTransaction(transaction) {
@@ -33,12 +33,11 @@ class Category {
     }
 
     matchTransaction(transaction) {
-        return this.keywords.test(transaction.description);
+        return this.pattern.test(transaction.description);
     }
 
     toString() {
         return `Category: ${this.name}\n` +
-            `Keywords: ${this.keywords.source.replace(/\|/g, ', ')}\n` +
             `Total transactions: ${this.totalTransactions}\n` +
             `Total amount: ${this.totalAmount.toFixed(2)}\n\n`;
     }
@@ -101,7 +100,7 @@ function getCategories(options, callback) {
         const categories = rows.map(row => {
             return new Category(
                 row[options.categoryColumns.name],
-                row[options.categoryColumns.keywords]
+                row[options.categoryColumns.pattern]
             );
         });
 
@@ -142,8 +141,8 @@ function getTransactions(options, callback) {
 }
 
 function saveCategories(options, categories) {
-    const data = `${options.categoryColumns.name},${options.categoryColumns.keywords}\n` +
-        categories.map(category => `${category.name},${category.keywords.source}`).join('\n');
+    const data = `${options.categoryColumns.name},${options.categoryColumns.pattern}\n` +
+        categories.map(category => `${category.name},${category.pattern.source}`).join('\n');
 
     fs.writeFileSync(options.categoryFile, data, 'utf-8', err => {
         if (err) {
@@ -209,7 +208,7 @@ const options = {
     categoryColumns: parseOption({
         name: '--category-columns',
         type: 'json',
-        defaultValue: {name: 'Name', keywords: 'Keywords'}
+        defaultValue: {name: 'Name', pattern: 'Pattern'}
     }),
     onlyCategories: parseOption({name: '--only-categories', type: 'array'}),
     fromDate: parseOption({name: '--from-date', type: 'date'}),
@@ -236,7 +235,7 @@ getTransactions(options, transactions => {
             process.stdout.write(`Transaction not categorized:\n${transaction}`);
 
             const newName = prompt('Please enter a category name: ');
-            const newKeywords = prompt('Please enter keywords: ');
+            const newPattern = prompt('Please enter pattern: ');
 
             process.stdout.write('\n' + '-'.repeat(process.stdout.columns) + '\n\n');
 
@@ -245,13 +244,13 @@ getTransactions(options, transactions => {
             );
 
             if (category) {
-                category.addKeywords(newKeywords);
+                category.addPattern(newPattern);
                 category.addTransaction(transaction);
                 saveCategories(options, categories);
                 return;
             }
 
-            const newCategory = new Category(newName, newKeywords);
+            const newCategory = new Category(newName, newPattern);
             newCategory.addTransaction(transaction);
             categories.push(newCategory);
             saveCategories(options, categories);

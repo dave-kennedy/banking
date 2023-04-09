@@ -16,11 +16,11 @@ Date,Description,Amount
 1/4/2015,DEPOSIT,1000000.00
 ```
 
-The categories file should have columns for the name of each category and a list
-of matching keywords as a regular expression:
+The categories file should have columns for the name of each category and a
+pattern that matches one or more transaction descriptions:
 
 ```
-Name,Keywords
+Name,Pattern
 Deposits,^deposit$
 ```
 
@@ -31,7 +31,7 @@ $ node main.js data/transactions.csv data/categories.csv
 ```
 
 If a transaction doesn't match any of the categories, it will ask for a category
-name and keywords:
+name and pattern:
 
 ```
 Transaction not categorized:
@@ -40,7 +40,7 @@ Description: DEBIT PURCHASE -VISA GOG.COM
 Amount: -2.49
 
 Please enter a category name: Games
-Please enter keywords: gog\.com
+Please enter a pattern: gog\.com
 ```
 
 Once every transaction has been categorized, it will display a summary of each
@@ -48,7 +48,6 @@ category:
 
 ```
 Category: Games
-Keywords: steamgames\.com, gog\.com
 Total transactions: 2
 Total amount: -10.48
 ```
@@ -79,22 +78,22 @@ $ node main.js ... --transaction-columns \
 
 ### --category-columns [JSON]
 
-Default: `{"name": "Name", "keywords": "Keywords"}`
+Default: `{"name": "Name", "pattern": "Pattern"}`
 
-The script expects a "Name" and a "Keywords" column in the categories csv
+The script expects a "Name" and a "Pattern" column in the categories csv
 file. Use this option if the columns in your file are named otherwise.
 
 For example, consider the following csv file:
 
 ```
-Label,Color,Pattern,Tax deductible
+Label,Color,Keywords,Tax deductible
 Medical,red,(?:dr|doctor) who,true
 ```
 
 In this case, you can specify the column names like so:
 
 ```sh
-$ node main.js ... --category-columns '{"Name": "Label", "Keywords": "Pattern"}'
+$ node main.js ... --category-columns '{"name": "Label", "pattern": "Keywords"}'
 ```
 
 ### --only-categories [CATEGORIES]
