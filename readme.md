@@ -78,7 +78,7 @@ In this case, you can specify the column names like so:
 
 ```sh
 $ node main.js ... --transaction-columns \
-    '{"Date": "DateTime", "Description": "Name", "Amount": "Amount"}'
+    '{"date": "DateTime", "description": "Name", "amount": "Amount"}'
 ```
 
 ### --category-columns [JSON]
@@ -101,16 +101,16 @@ In this case, you can specify the column names like so:
 $ node main.js ... --category-columns '{"Name": "Label", "Keywords": "Pattern"}'
 ```
 
-### --inspect-category [CATEGORY]
+### --only-categories [CATEGORIES]
 
 Default: none
 
-Use this option to display only one category and all its transactions.
+Use this option to display only the listed categories.
 
 Example:
 
 ```sh
-$ node main.js ... --inspect-category groceries
+$ node main.js ... --only-categories 'fast food,groceries'
 ```
 
 ### --from-date [DATE]
@@ -141,7 +141,7 @@ $ node main.js ... --from-date 4/30/2016
 
 Default: false
 
-Use this option to display all transactions in all categories.
+Use this option to list the transactions in the displayed categories.
 
 Example:
 

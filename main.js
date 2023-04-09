@@ -174,8 +174,12 @@ function parseOption({index, name, description, type, defaultValue}) {
         return true;
     }
 
-    if (args.length < optIndex + 2) {
-        throw `Missing value for argument ${name}`;
+    if (args.length < optIndex + 2 || !args[optIndex + 1].trim()) {
+        throw `Missing value for ${name}`;
+    }
+
+    if (type == 'array') {
+        return args[optIndex + 1].split(',');
     }
 
     if (type == 'date') {
@@ -208,7 +212,7 @@ const options = {
         type: 'json',
         defaultValue: {name: 'Name', keywords: 'Keywords'}
     }),
-    inspectCategory: parseOption({name: '--inspect-category'}),
+    onlyCategories: parseOption({name: '--only-categories', type: 'array'}),
     fromDate: parseOption({name: '--from-date', type: 'date'}),
     toDate: parseOption({name: '--to-date', type: 'date'}),
     verbose: parseOption({name: '--verbose', type: 'boolean'})
@@ -232,25 +236,11 @@ getTransactions(options, transactions => {
             matchingCategories[0].addTransaction(transaction);
         });
 
-        if (options.inspectCategory) {
-            const matchingCategory = categories.find(category => {
-                return category.name.toLowerCase() == options.inspectCategory.toLowerCase();
-            });
+        const onlyCategories = options.onlyCategories?.map(category => category.toLowerCase());
 
-            if (!matchingCategory) {
-                throw `No category found named ${options.inspectCategory}`;
-            }
-
-            process.stdout.write(matchingCategory.toString());
-
-            matchingCategory.sortTransactions().forEach(transaction => {
-                process.stdout.write(transaction.toString());
-            });
-
-            return;
-        }
-
-        categories.forEach(category => {
+        categories.filter(category => {
+            return !onlyCategories || onlyCategories.includes(category.name.toLowerCase());
+        }).forEach(category => {
             process.stdout.write(category.toString());
 
             if (options.verbose) {
